@@ -1,1 +1,1 @@
-# version-controll
+Implementing part of git with C
