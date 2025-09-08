@@ -2,7 +2,7 @@
 #
 # This script is used to run your program on CodeCrafters
 #
-# This runs after .codecrafters/compile.sh
+# This runs after .script/compile.sh
 #
 # Learn more: https://codecrafters.io/program-interface
 
