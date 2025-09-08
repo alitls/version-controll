@@ -1,0 +1,8 @@
+/home/alireza/Apps/clion/clion-2019.2.4/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/alireza/Code/C/git-c
+-- Configuring done
+CMake Error at CMakeLists.txt:12 (add_executable):
+  C_STANDARD is set to invalid value '23'
+
+
+-- Generating done
+CMake Generate step failed.  Build files cannot be regenerated correctly.
