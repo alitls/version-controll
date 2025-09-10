@@ -54,6 +54,7 @@ int myGit(int argc, char *argv[]) {
         }
 
         const char *object_hash = argv[3];
+        //put string(path) to buffer
         char object_path[256];
         sprintf(object_path, ".git/objects/%c%c/%s", object_hash[0], object_hash[1], object_hash + 2);
 
@@ -65,6 +66,7 @@ int myGit(int argc, char *argv[]) {
 
         fseek(object_file, 0, SEEK_END); //jump cursor to end
         long size = ftell(object_file);
+        printf("size of file: %ld\n", size);
         fseek(object_file, 0, SEEK_SET); //back cursor to start
 
         unsigned char *compressed_data = malloc(size);
@@ -110,12 +112,18 @@ int myGit(int argc, char *argv[]) {
         free(compressed_data);
 
 
+
+        //"blob <size>\0<actual file data>"
         unsigned char *content = memchr(decompressed, 0, stream.total_out);
         if (!content) {
             fprintf(stderr, "Invalid object format\n");
             return 1;
         }
+        //skip past the \0, so now content points to the actual file data.
         content++;
+        //stream.total_out - (content - decompressed) ==> how many bytes to print
+        //(total decompressed size minus the header length)
+        //content - decompressed = 8 (because "blob 12\0" is 8 bytes long)
         fwrite(content, 1, stream.total_out - (content - decompressed), stdout);
 
     } else {
