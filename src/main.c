@@ -12,6 +12,8 @@ int zlib_cd();
 
 void hash();
 
+void command_ls_tree();
+
 int main(int argc, char *argv[]) {
     return myGit(argc, argv);
 }
@@ -270,10 +272,87 @@ int myGit(int argc, char *argv[]) {
         free(compressed_data);
         free(content);
 
+    } else if (strcmp(command, "ls-tree") == 0) {
+        if (argc != 4 || strcmp(argv[2], "--name-only") != 0) {
+            fprintf(stderr, "Usage ./your_program.sh ls-tree --name-only <tree_sha>\n");
+            return 1;
+        }
+        command_ls_tree(argv[2], argv[3]);
     } else {
         fprintf(stderr, "Unknown command %s\n", command);
         return 1;
     }
 
     return 0;
+}
+
+void command_ls_tree(char *flag, char *tree_sha) {
+    if (!tree_sha) {
+        fprintf(stderr, "Invalid tree_sha: %s\n", strerror(errno));
+        exit(99);
+    }
+
+    char path[128];
+    sprintf(path, ".git/objects/%.2s/%s", tree_sha, tree_sha + 2);
+
+    FILE *fp = fopen(path, "rb");
+    if (!fp) {
+        fprintf(stderr, "Could not open tree object: %s\n", strerror(errno));
+        exit(99);
+    }
+
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    rewind(fp);
+
+    Bytef *content = malloc(file_size);
+    if (!content) {
+        fprintf(stderr, "malloc error: %s\n", strerror(errno));
+        fclose(fp);
+        exit(99);
+    }
+    if (fread(content, 1, file_size, fp) != file_size) {
+        fprintf(stderr, "File size is diff with malloc size: %s\n", strerror(errno));
+        fclose(fp);
+        free(content);
+        exit(99);
+    }
+    fclose(fp);
+
+
+    uLongf buffer_size = 4096;
+    Bytef *buffer = malloc(buffer_size);
+    if (!buffer) {
+        fprintf(stderr, "malloc error: %s\n", strerror(errno));
+        free(content);
+        exit(99);
+    }
+
+    int status = uncompress(buffer, &buffer_size, content, file_size);
+
+    if (status == Z_BUF_ERROR) {
+        fprintf(stderr, "Buffer error: %sa\n", strerror(errno));
+        free(content);
+        free(buffer);
+        exit(100);
+    }
+
+    if (status != Z_OK) {
+        fprintf(stderr, "Decompression failed!: %s\n", strerror(errno));
+        free(buffer);
+        exit(897);
+    }
+
+    free(content);
+
+    Bytef *end = buffer + buffer_size;
+    Bytef *ptr = memchr(buffer, '\0', buffer_size) + 1;
+    while (ptr != end) {
+        Bytef *name = memchr(ptr, ' ', end - ptr) + 1;
+        printf("%s\n", name);
+        Bytef *nul = memchr(name, '\0', end - name);
+        ptr = nul + 21;
+    }
+
+    free(buffer);
 }
